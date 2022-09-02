@@ -1,12 +1,13 @@
 package nayoung.reservation_system.exception.meeting_room;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import nayoung.reservation_system.exception.ExceptionCode;
+import nayoung.reservation_system.exception.global.NotFoundException;
 
 @Getter
-@RequiredArgsConstructor
-public class NotFoundMeetingRoomException extends RuntimeException {
+public class NotFoundMeetingRoomException extends NotFoundException {
 
-    private final ExceptionCode exceptionCode;
+    public NotFoundMeetingRoomException(ExceptionCode exceptionCode) {
+        super(exceptionCode);
+    }
 }

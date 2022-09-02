@@ -1,6 +1,8 @@
 package nayoung.reservation_system.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import nayoung.reservation_system.exception.global.NotFoundException;
+import nayoung.reservation_system.exception.meeting_room.NotFoundMeetingRoomException;
 import nayoung.reservation_system.exception.response.ExceptionResponse;
 import nayoung.reservation_system.exception.account.NotFoundAccountException;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +14,8 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler(NotFoundAccountException.class)
-    public ResponseEntity<?> handleNotFoundAccount(NotFoundAccountException e) {
+    @ExceptionHandler({NotFoundAccountException.class, NotFoundMeetingRoomException.class})
+    public ResponseEntity<?> handleNotFound(NotFoundException e) {
         return handleExceptionInternal(e.getExceptionCode());
     }
 

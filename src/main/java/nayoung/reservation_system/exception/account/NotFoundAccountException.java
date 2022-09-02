@@ -1,12 +1,13 @@
 package nayoung.reservation_system.exception.account;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import nayoung.reservation_system.exception.ExceptionCode;
+import nayoung.reservation_system.exception.global.NotFoundException;
 
 @Getter
-@RequiredArgsConstructor
-public class NotFoundAccountException extends RuntimeException {
+public class NotFoundAccountException extends NotFoundException {
 
-    private final ExceptionCode exceptionCode;
+    public NotFoundAccountException(ExceptionCode exceptionCode) {
+        super(exceptionCode);
+    }
 }
