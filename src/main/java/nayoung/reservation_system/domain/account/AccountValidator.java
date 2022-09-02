@@ -3,8 +3,8 @@ package nayoung.reservation_system.domain.account;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nayoung.reservation_system.exception.ExceptionCode;
-import nayoung.reservation_system.exception.account.NotFoundAccountException;
 import nayoung.reservation_system.exception.account.AccountException;
+import nayoung.reservation_system.exception.account.NotFoundAccountException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -25,14 +25,6 @@ public class AccountValidator {
         if(!accountRepository.existsByUsername(username)) {
             log.warn("[UserValidator] {} NOT FOUND USER EXCEPTION", username);
             throw new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT);
-        }
-    }
-
-    public void existByUsernameAndPassword(String username, String password) {
-        existByUsername(username);
-        if(!accountRepository.existsByUsernameAndPassword(username, password)) {
-            log.warn("[UserValidator] {} PASSWORD MISMATCH", username);
-            throw new AccountException(ExceptionCode.PASSWORD_MISMATCH);
         }
     }
 }

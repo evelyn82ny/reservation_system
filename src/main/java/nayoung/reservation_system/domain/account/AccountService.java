@@ -2,6 +2,8 @@ package nayoung.reservation_system.domain.account;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nayoung.reservation_system.exception.ExceptionCode;
+import nayoung.reservation_system.exception.account.AccountException;
 import nayoung.reservation_system.web.account.model.SignInRequest;
 import nayoung.reservation_system.web.account.model.SignInResponse;
 import nayoung.reservation_system.web.account.model.SignUpRequest;
@@ -25,9 +27,11 @@ public class AccountService {
     }
 
     public SignInResponse signIn(SignInRequest request) {
-        validator.existByUsernameAndPassword(request.getUsername(), request.getPassword());
+        validator.existByUsername(request.getUsername());
 
-        Account account = accountRepository.findByUsernameAndPassword(request.getUsername(), request.getPassword()).get();
+        Account account = accountRepository.findByUsernameAndPassword(request.getUsername(), request.getPassword())
+                .orElseThrow(() -> new AccountException(ExceptionCode.PASSWORD_MISMATCH));
+
         return SignInResponse.fromUsername(true, account.getUsername());
     }
 }
