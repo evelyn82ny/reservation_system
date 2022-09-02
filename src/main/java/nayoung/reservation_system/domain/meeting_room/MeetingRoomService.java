@@ -9,18 +9,10 @@ import org.springframework.stereotype.Service;
 public class MeetingRoomService {
 
     private final MeetingRoomRepository meetingRoomRepository;
-    private final MeetingRoomValidator validator;
 
     public MeetingRoomResponse createMeetingRoom(Long numberOfPeople) {
         MeetingRoom meetingRoom = MeetingRoom.fromNumberOfPeople(numberOfPeople);
         MeetingRoom savedMeetingRoom = meetingRoomRepository.save(meetingRoom);
         return MeetingRoomResponse.fromMeetingRoom(savedMeetingRoom);
-    }
-
-    public MeetingRoomResponse findByNumberOfPeople(Long numberOfPeople) {
-        validator.existByNumberOfPeople(numberOfPeople);
-
-        MeetingRoom meetingRoom = meetingRoomRepository.findByNumberOfPeople(numberOfPeople).get();
-        return MeetingRoomResponse.fromMeetingRoom(meetingRoom);
     }
 }

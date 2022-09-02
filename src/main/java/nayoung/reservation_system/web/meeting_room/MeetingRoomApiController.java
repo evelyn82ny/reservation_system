@@ -16,12 +16,6 @@ public class MeetingRoomApiController {
 
     private final MeetingRoomService meetingRoomService;
 
-    @GetMapping("/{numberOfPeople}")
-    public ResponseEntity<?> getMeetingRoom(@PathVariable Long numberOfPeople) {
-        MeetingRoomResponse response = meetingRoomService.findByNumberOfPeople(numberOfPeople);
-        return new ResponseEntity<>(response, HttpStatus.OK);
-    }
-
     @PostMapping("/{numberOfPeople}")
     public ResponseEntity<?> createMeetingRoom(@PathVariable Long numberOfPeople) {
         MeetingRoomResponse response = meetingRoomService.createMeetingRoom(numberOfPeople);
