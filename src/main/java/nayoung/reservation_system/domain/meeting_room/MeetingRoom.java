@@ -19,6 +19,7 @@ public class MeetingRoom {
 
     private Long maximumNumberOfPeople;
 
+    @Enumerated(EnumType.STRING)
     private ReservationStatus reservationStatus;
 
     private Long numberOfReservations;
@@ -26,10 +27,11 @@ public class MeetingRoom {
     private MeetingRoom(Long maximumNumberOfPeople) {
         this.maximumNumberOfPeople = maximumNumberOfPeople;
         this.reservationStatus = ReservationStatus.AVAILABLE;
+        this.numberOfReservations = 0L;
     }
 
-    public static MeetingRoom fromNumberOfPeople(Long numberOfPeople) {
-        return new MeetingRoom(numberOfPeople);
+    public static MeetingRoom fromMaximumNumberOfPeople(Long maximumNumberOfPeople) {
+        return new MeetingRoom(maximumNumberOfPeople);
     }
 
     public void updateReservationStatus(ReservationStatus status) {
