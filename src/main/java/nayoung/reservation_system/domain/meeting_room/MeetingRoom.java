@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import nayoung.reservation_system.domain.reservation.ReservationStatus;
 
 import javax.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Getter
@@ -16,12 +17,14 @@ public class MeetingRoom {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long numberOfPeople;
+    private Long maximumNumberOfPeople;
 
     private ReservationStatus reservationStatus;
 
-    private MeetingRoom(Long numberOfPeople) {
-        this.numberOfPeople = numberOfPeople;
+    private Long numberOfReservations;
+
+    private MeetingRoom(Long maximumNumberOfPeople) {
+        this.maximumNumberOfPeople = maximumNumberOfPeople;
         this.reservationStatus = ReservationStatus.AVAILABLE;
     }
 
@@ -31,5 +34,13 @@ public class MeetingRoom {
 
     public void updateReservationStatus(ReservationStatus status) {
         this.reservationStatus = status;
+    }
+
+    public boolean isFull() {
+        return Objects.equals(numberOfReservations, maximumNumberOfPeople);
+    }
+
+    public void addNumberOfReservations() {
+        this.numberOfReservations += 1;
     }
 }
