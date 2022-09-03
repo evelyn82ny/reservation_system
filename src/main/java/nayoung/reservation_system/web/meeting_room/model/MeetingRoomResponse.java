@@ -9,18 +9,18 @@ public class MeetingRoomResponse {
 
     private boolean eligible;
     private Long id;
-    private Long numberOfPeople;
+    private Long maximumNumberOfPeople;
     private ReservationStatus reservationStatus;
 
-    private MeetingRoomResponse(boolean eligible, Long id, Long numberOfPeople, ReservationStatus reservationStatus) {
+    private MeetingRoomResponse(boolean eligible, Long id, Long maximumNumberOfPeople, ReservationStatus reservationStatus) {
         this.eligible = eligible;
         this.id = id;
-        this.numberOfPeople = numberOfPeople;
+        this.maximumNumberOfPeople = maximumNumberOfPeople;
         this.reservationStatus = reservationStatus;
     }
 
     public static MeetingRoomResponse fromMeetingRoom(MeetingRoom meetingRoom) {
-        return new MeetingRoomResponse(true, meetingRoom.getId(), meetingRoom.getNumberOfPeople(), meetingRoom.getReservationStatus());
+        return new MeetingRoomResponse(true, meetingRoom.getId(), meetingRoom.getMaximumNumberOfPeople(), meetingRoom.getReservationStatus());
     }
 
     public static MeetingRoomResponse fromIneligible() {
