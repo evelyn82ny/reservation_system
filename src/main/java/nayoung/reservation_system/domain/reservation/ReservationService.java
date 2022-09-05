@@ -14,8 +14,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 @Slf4j
-
 public class ReservationService {
 
     private final ReservationRepository reservationRepository;
@@ -40,10 +40,18 @@ public class ReservationService {
         return response;
     }
 
-
-    @Transactional
     public ReservationResponse reserveMeetingRoomWithoutLock(Long meetingRoomId, String username) {
         MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithoutLock(meetingRoomId)
+                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
+
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+
+        return reserveMeetingRoom(meetingRoom, account);
+    }
+
+    public ReservationResponse reserveMeetingRoomWithLock(Long meetingRoomId, String username) {
+        MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithLock(meetingRoomId)
                 .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
 
         Account account = accountRepository.findByUsername(username)

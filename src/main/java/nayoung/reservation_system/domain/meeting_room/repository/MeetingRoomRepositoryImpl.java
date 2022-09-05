@@ -24,4 +24,12 @@ public class MeetingRoomRepositoryImpl implements MeetingRoomRepositoryCustom {
                 .where(meetingRoom.id.eq(meetingRoomId))
                 .fetchOne());
     }
+
+    @Override
+    public Optional<MeetingRoom> findByIdWithLock(Long meetingRoomId) {
+        return Optional.ofNullable(queryFactory.selectFrom(meetingRoom)
+                .where(meetingRoom.id.eq(meetingRoomId))
+                .setLockMode(LockModeType.PESSIMISTIC_WRITE)
+                .fetchOne());
+    }
 }
