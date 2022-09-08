@@ -1,6 +1,7 @@
 package nayoung.reservation_system.web.reservation;
 
 import lombok.RequiredArgsConstructor;
+import nayoung.reservation_system.domain.account.AccountValidator;
 import nayoung.reservation_system.domain.reservation.ReservationService;
 import nayoung.reservation_system.web.reservation.model.ReservationResponse;
 import org.springframework.http.HttpStatus;
@@ -16,10 +17,13 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReservationApiController {
 
     private final ReservationService reservationService;
+    private final AccountValidator accountValidator;
 
     @PostMapping("/{meetingRoomId}/{username}")
     public ResponseEntity<?> reserveMeetingRoom(@PathVariable Long meetingRoomId, @PathVariable String username) {
-        ReservationResponse response = reservationService.reserveMeetingRoomWithoutLock(meetingRoomId, username);
+        Long accountId = accountValidator.existByUsername(username);
+
+        ReservationResponse response = reservationService.reserveMeetingRoomWithoutLock(meetingRoomId, accountId);
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
 }

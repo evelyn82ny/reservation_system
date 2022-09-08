@@ -21,10 +21,10 @@ public class AccountValidator {
         }
     }
 
-    public void existByUsername(String username) {
-        if(!accountRepository.existsByUsername(username)) {
-            log.warn("[UserValidator] {} NOT FOUND USER EXCEPTION", username);
-            throw new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT);
-        }
+    public Long existByUsername(String username) {
+        Account account = accountRepository.findByUsername(username)
+                .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
+
+        return account.getId();
     }
 }

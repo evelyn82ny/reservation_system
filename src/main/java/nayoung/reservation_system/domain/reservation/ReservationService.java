@@ -40,21 +40,21 @@ public class ReservationService {
         return response;
     }
 
-    public ReservationResponse reserveMeetingRoomWithoutLock(Long meetingRoomId, String username) {
+    public ReservationResponse reserveMeetingRoomWithoutLock(Long meetingRoomId, Long accountId) {
         MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithoutLock(meetingRoomId)
                 .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
 
-        Account account = accountRepository.findByUsername(username)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         return reserveMeetingRoom(meetingRoom, account);
     }
 
-    public ReservationResponse reserveMeetingRoomWithLock(Long meetingRoomId, String username) {
+    public ReservationResponse reserveMeetingRoomWithLock(Long meetingRoomId, Long accountId) {
         MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithLock(meetingRoomId)
                 .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
 
-        Account account = accountRepository.findByUsername(username)
+        Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         return reserveMeetingRoom(meetingRoom, account);
