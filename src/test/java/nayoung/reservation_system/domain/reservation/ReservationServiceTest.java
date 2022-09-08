@@ -1,6 +1,5 @@
 package nayoung.reservation_system.domain.reservation;
 
-import nayoung.reservation_system.domain.meeting_room.MeetingRoom;
 import nayoung.reservation_system.domain.meeting_room.MeetingRoomService;
 import nayoung.reservation_system.domain.meeting_room.repository.MeetingRoomRepository;
 import nayoung.reservation_system.domain.account.AccountService;
@@ -26,12 +25,17 @@ class ReservationServiceTest {
     @Autowired MeetingRoomRepository meetingRoomRepository;
     @Autowired AccountService accountService;
 
-    List<String> usernames = List.of(new String[]{"apple", "kiwi", "banana", "kaya"});
-    final String password = "1234";
+    final int TOTAL_USERS = 100;
+    final String username = "apple";
+    final String password = "password";
 
+    /**
+     * 모든 계정의 username 필드의 값이 같다는 점을 감안합니다.
+     * AccountValidator.duplicateUsername 주석처리 후 테스트합니다.
+     */
     @BeforeEach
     void init() {
-        for(String username : usernames) {
+        for(int i = 0; i < TOTAL_USERS; i++) {
             SignUpRequest request = new SignUpRequest();
             request.setUsername(username);
             request.setPassword(password);
@@ -45,36 +49,31 @@ class ReservationServiceTest {
     @DisplayName("데드락 발생하는 테스트")
     void reserveWithoutLock() throws InterruptedException {
         final Long meetingRoomId = 2L;
-        CountDownLatch countDownLatch = new CountDownLatch(usernames.size());
+        CountDownLatch countDownLatch = new CountDownLatch(TOTAL_USERS);
 
-        List<Thread> workers = new ArrayList<>();
-        for(String username : usernames) {
-            workers.add(new Thread(
-                    new ReserveWithoutLockWorker(username, meetingRoomId, countDownLatch)
-            ));
+        List<ReserveWithoutLockWorker> workers = new ArrayList<>();
+        for(long accountId = 1L; accountId <= TOTAL_USERS; accountId++) {
+            workers.add(new ReserveWithoutLockWorker(accountId, meetingRoomId, countDownLatch));
         }
-        workers.forEach(Thread::start);
-        countDownLatch.await();
 
-        MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithoutLock(meetingRoomId).get();
-        System.out.println(meetingRoom.getReservationStatus());
-        System.out.println(meetingRoom.getNumberOfReservations());
+        workers.forEach(worker -> new Thread(worker).start());
+        countDownLatch.await();
     }
 
    private class ReserveWithoutLockWorker implements Runnable {
-        private String username;
+        private Long accountId;
         private Long meetingRoomId;
         private CountDownLatch countDownLatch;
 
-        public ReserveWithoutLockWorker(String username, Long meetingRoomId, CountDownLatch countDownLatch) {
-            this.username = username;
+        public ReserveWithoutLockWorker(Long accountId, Long meetingRoomId, CountDownLatch countDownLatch) {
+            this.accountId = accountId;
             this.meetingRoomId = meetingRoomId;
             this.countDownLatch = countDownLatch;
         }
 
        @Override
        public void run() {
-           reservationService.reserveMeetingRoomWithoutLock(meetingRoomId, username);
+           reservationService.reserveMeetingRoomWithoutLock(meetingRoomId, accountId);
            countDownLatch.countDown();
        }
    }
