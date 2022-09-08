@@ -1,5 +1,6 @@
 package nayoung.reservation_system.domain.reservation;
 
+import nayoung.reservation_system.domain.meeting_room.MeetingRoom;
 import nayoung.reservation_system.domain.meeting_room.MeetingRoomService;
 import nayoung.reservation_system.domain.meeting_room.repository.MeetingRoomRepository;
 import nayoung.reservation_system.domain.account.AccountService;
@@ -15,6 +16,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -60,6 +62,25 @@ class ReservationServiceTest {
         countDownLatch.await();
     }
 
+    @Test
+    @DisplayName("비관적 락 사용")
+    void reserveWithLock() throws InterruptedException {
+        final Long meetingRoomId = 2L;
+        CountDownLatch countDownLatch = new CountDownLatch(TOTAL_USERS);
+
+        List<ReserveWithLockWorker> workers = new ArrayList<>();
+        for(long accountId = 1L; accountId <= TOTAL_USERS; accountId++) {
+            workers.add(new ReserveWithLockWorker(accountId, meetingRoomId, countDownLatch));
+        }
+
+        workers.forEach(worker -> new Thread(worker).start());
+        countDownLatch.await();
+
+        MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithoutLock(meetingRoomId).get();
+        assertThat(meetingRoom.getReservationStatus()).isEqualTo(ReservationStatus.FULL);
+        assertThat(meetingRoom.getNumberOfReservations()).isEqualTo(meetingRoom.getMaximumNumberOfPeople());
+    }
+
    private class ReserveWithoutLockWorker implements Runnable {
         private Long accountId;
         private Long meetingRoomId;
@@ -77,4 +98,22 @@ class ReservationServiceTest {
            countDownLatch.countDown();
        }
    }
+
+    private class ReserveWithLockWorker implements Runnable {
+        private Long accountId;
+        private Long meetingRoomId;
+        private CountDownLatch countDownLatch;
+
+        public ReserveWithLockWorker(Long accountId, Long meetingRoomId, CountDownLatch countDownLatch) {
+            this.accountId = accountId;
+            this.meetingRoomId = meetingRoomId;
+            this.countDownLatch = countDownLatch;
+        }
+
+        @Override
+        public void run() {
+            reservationService.reserveMeetingRoomWithLock(meetingRoomId, accountId);
+            countDownLatch.countDown();
+        }
+    }
 }
