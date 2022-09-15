@@ -64,7 +64,6 @@ public class AccountService {
         return getAccountInfo(accountId);
     }
 
-    @Transactional
     public AccountResponse update(Long accountId, AccountDetailRequest request) {
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
@@ -76,6 +75,8 @@ public class AccountService {
         }
 
         account.update(request);
+        accountRepository.save(account);
+
         return AccountResponse.of(account);
     }
 }

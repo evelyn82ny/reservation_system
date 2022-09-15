@@ -15,6 +15,9 @@ import javax.persistence.*;
 @Slf4j
 public class Account {
 
+    @Version
+    private Long version;
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

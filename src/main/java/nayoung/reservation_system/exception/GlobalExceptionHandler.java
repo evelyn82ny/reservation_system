@@ -10,13 +10,20 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
+import javax.persistence.OptimisticLockException;
+
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({NotFoundAccountException.class, NotFoundMeetingRoomException.class})
+    @ExceptionHandler({NotFoundException.class})
     public ResponseEntity<?> handleNotFound(NotFoundException e) {
         return handleExceptionInternal(e.getExceptionCode());
+    }
+
+    @ExceptionHandler({OptimisticLockException.class})
+    public ResponseEntity<?> handleOptimisticLock(OptimisticLockException e) {
+        return handleExceptionInternal(ExceptionCode.VERSION_CONFLICT);
     }
 
     private ResponseEntity<Object> handleExceptionInternal(ExceptionCode exceptionCode) {
