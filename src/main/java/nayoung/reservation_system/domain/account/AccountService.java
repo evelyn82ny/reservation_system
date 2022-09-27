@@ -5,11 +5,10 @@ import lombok.extern.slf4j.Slf4j;
 import nayoung.reservation_system.domain.account.repository.AccountRepository;
 import nayoung.reservation_system.exception.ExceptionCode;
 import nayoung.reservation_system.exception.account.AccountException;
-import nayoung.reservation_system.exception.global.NotFoundException;
+import nayoung.reservation_system.exception.account.DuplicateUsernameException;
+import nayoung.reservation_system.exception.account.NotFoundAccountException;
 import nayoung.reservation_system.web.account.model.*;
-import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.util.Objects;
@@ -19,12 +18,12 @@ import java.util.Objects;
 @Slf4j
 public class AccountService {
 
-    private final AccountValidator validator;
     private final AccountRepository accountRepository;
-    ModelMapper mapper = new ModelMapper();
 
     public SignUpResponse signUp(SignUpRequest request) {
-        validator.duplicateUsername(request.getUsername());
+        if(accountRepository.existsByUsername(request.getUsername())) {
+            throw new DuplicateUsernameException(ExceptionCode.DUPLICATE_USERNAME);
+        }
 
         Account account = Account.fromSignUpRequest(request);
         Account savedAccount = accountRepository.save(account);
@@ -32,7 +31,9 @@ public class AccountService {
     }
 
     public SignInResponse signIn(SignInRequest request) {
-        validator.existByUsername(request.getUsername());
+        if(!accountRepository.existsByUsername(request.getUsername())) {
+            throw new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT);
+        }
 
         Account account = accountRepository.findByUsernameAndPassword(request.getUsername(), request.getPassword())
                 .orElseThrow(() -> new AccountException(ExceptionCode.PASSWORD_MISMATCH));
@@ -42,35 +43,35 @@ public class AccountService {
 
     private AccountResponse getAccountInfo(Long accountId) {
         Account account = accountRepository.findById(accountId)
-                        .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+                        .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         return AccountResponse.of(account);
     }
 
     private MyPageResponse getMyPageInfo(String username) {
         Account account = accountRepository.findByUsername(username)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+                .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         return MyPageResponse.of(account);
     }
 
     public MyPageResponse getMyPage(Long accountId, String username) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+                .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         if(StringUtils.hasText(username) && !Objects.equals(account.getUsername(), username)) {
             return getMyPageInfo(username);
         }
-        return getAccountInfo(accountId);
+        return AccountResponse.of(account);
     }
 
     public AccountResponse update(Long accountId, AccountDetailRequest request) {
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+                .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         if(!Objects.equals(account.getUsername(), request.getUsername())) {
             if(accountRepository.existsByUsername(request.getUsername())) {
-                throw new AccountException(ExceptionCode.DUPLICATE_USERNAME);
+                throw new DuplicateUsernameException(ExceptionCode.DUPLICATE_USERNAME);
             }
         }
 
