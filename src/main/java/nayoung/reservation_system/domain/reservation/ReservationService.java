@@ -7,7 +7,8 @@ import nayoung.reservation_system.domain.meeting_room.MeetingRoom;
 import nayoung.reservation_system.domain.account.Account;
 import nayoung.reservation_system.domain.meeting_room.repository.MeetingRoomRepository;
 import nayoung.reservation_system.exception.ExceptionCode;
-import nayoung.reservation_system.exception.global.NotFoundException;
+import nayoung.reservation_system.exception.account.NotFoundAccountException;
+import nayoung.reservation_system.exception.meeting_room.NotFoundMeetingRoomException;
 import nayoung.reservation_system.web.reservation.model.ReservationResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -51,20 +52,20 @@ public class ReservationService {
 
     public ReservationResponse reserveMeetingRoomWithoutLock(Long meetingRoomId, Long accountId) {
         MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithoutLock(meetingRoomId)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
+                .orElseThrow(() -> new NotFoundMeetingRoomException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+                .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         return reserveMeetingRoom(meetingRoom, account);
     }
 
     public ReservationResponse reserveMeetingRoomWithLock(Long meetingRoomId, Long accountId) {
         MeetingRoom meetingRoom = meetingRoomRepository.findByIdWithLock(meetingRoomId)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
+                .orElseThrow(() -> new NotFoundMeetingRoomException(ExceptionCode.NOT_FOUND_MEETING_ROOM));
 
         Account account = accountRepository.findById(accountId)
-                .orElseThrow(() -> new NotFoundException(ExceptionCode.NOT_FOUND_ACCOUNT));
+                .orElseThrow(() -> new NotFoundAccountException(ExceptionCode.NOT_FOUND_ACCOUNT));
 
         return reserveMeetingRoom(meetingRoom, account);
     }
