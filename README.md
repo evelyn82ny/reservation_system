@@ -28,6 +28,8 @@
 
 ## 예약 생성 기능
 
+- 더 자세한 내용은 https://velog.io/@evelyn82ny/when-to-use-a-pessimistic-lock-feat-2PL 에서 확인 가능
+
 ```java
 protected ReservationResponse reserveMeetingRoom(MeetingRoom meetingRoom, Account account) {
 
