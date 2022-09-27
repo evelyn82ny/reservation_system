@@ -2,7 +2,7 @@ package nayoung.reservation_system.domain.reservation;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nayoung.reservation_system.domain.account.AccountRepository;
+import nayoung.reservation_system.domain.account.repository.AccountRepository;
 import nayoung.reservation_system.domain.meeting_room.MeetingRoom;
 import nayoung.reservation_system.domain.account.Account;
 import nayoung.reservation_system.domain.meeting_room.repository.MeetingRoomRepository;
@@ -11,6 +11,8 @@ import nayoung.reservation_system.exception.global.NotFoundException;
 import nayoung.reservation_system.web.reservation.model.ReservationResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -21,10 +23,17 @@ public class ReservationService {
     private final ReservationRepository reservationRepository;
     private final AccountRepository accountRepository;
     private final MeetingRoomRepository meetingRoomRepository;
-    private final ReservationValidator validator;
 
     protected ReservationResponse reserveMeetingRoom(MeetingRoom meetingRoom, Account account) {
-        ReservationResponse response = validator.isAvailableMeetingRoom(meetingRoom);
+
+        ReservationResponse response;
+        if(Objects.equals(meetingRoom.getReservationStatus(), ReservationStatus.AVAILABLE)) {
+            response = ReservationResponse.ofEligible(meetingRoom.getId());
+        }
+        else {
+            response = ReservationResponse.ofIneligible(meetingRoom.getId());
+        }
+
         response.setAccountId(account.getId());
         if(!response.isEligible())
             return response;
