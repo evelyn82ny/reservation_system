@@ -1,6 +1,8 @@
 package nayoung.reservation_system.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import nayoung.reservation_system.exception.account.AccountException;
+import nayoung.reservation_system.exception.account.DuplicateUsernameException;
 import nayoung.reservation_system.exception.global.NotFoundException;
 import nayoung.reservation_system.exception.meeting_room.NotFoundMeetingRoomException;
 import nayoung.reservation_system.exception.response.ExceptionResponse;
@@ -16,8 +18,13 @@ import javax.persistence.OptimisticLockException;
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
-    @ExceptionHandler({NotFoundException.class})
-    public ResponseEntity<?> handleNotFound(NotFoundException e) {
+    @ExceptionHandler({NotFoundAccountException.class, NotFoundMeetingRoomException.class})
+    public ResponseEntity<?> handleNotFoundEntity(NotFoundException e) {
+        return handleExceptionInternal(e.getExceptionCode());
+    }
+
+    @ExceptionHandler({DuplicateUsernameException.class, AccountException.class})
+    public ResponseEntity<?> handleRelatedAccount(AccountException e) {
         return handleExceptionInternal(e.getExceptionCode());
     }
 
