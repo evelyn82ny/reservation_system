@@ -95,6 +95,8 @@ protected ReservationResponse reserveMeetingRoom(MeetingRoom meetingRoom, Accoun
 - SaveAndFlush 사용(갱신 손실 발생)
 - Lock 사용 (Attempt 3)
 
+추가적으로 Semaphore를 공부하며 생산자-소비자 모델을 구현해 ```pthread_cond_wait()``` 로 공유 자원에 접근하는 순서를 조절한 경험이 있는데 더 자세한 내용은 https://velog.io/@evelyn82ny/synchronization-semaphore 에서 확인 가능하다.
+
 <br>
 
 ### 갱신 손실 발생
