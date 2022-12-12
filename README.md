@@ -30,7 +30,7 @@ WAS로 사용 중인 Tomcat은 요청마다 스레드가 할당되는 멀티스�
 
 ## 예약 생성 기능
 
-- 더 자세한 내용은 https://velog.io/@evelyn82ny/when-to-use-a-pessimistic-lock-feat-2PL 에서 확인 가능
+> 아래 내용은 https://velog.io/@evelyn82ny/when-to-use-a-pessimistic-lock-feat-2PL  글의 일부분이며 해당 링크에서 더 자세히 확인할 수 있다.
 
 ```java
 protected ReservationResponse reserveMeetingRoom(MeetingRoom meetingRoom, Account account) {
@@ -79,22 +79,23 @@ protected ReservationResponse reserveMeetingRoom(MeetingRoom meetingRoom, Accoun
 
 ### Attempt2: Lock X, Transaction O
 
-- ```Service.reserveMeetingRoom()```에 **@Transactional** 추가
-- 트랜잭션 사용한 결과 DeadLock 발생
+```Service.reserveMeetingRoom()```에 **@Transactional** 추가한 결과 DeadLock이 발생했다.
 <br>
 
-- Lock을 걸지 않았음에도 DeadLock 발생한 이유는 **FK를 가지고 있는 테이블에 대한 작업 수행 시 MySQL InnoDB 엔진이 자동으로 FK로 참조 중인 레코드에 레코드 레벨의 S-Lock 설정**
-- 또한 UPDATE query에 사용되는 모든 레코드에 X-Lock(Exclusive lock)이 설정됨
+- Lock을 걸지 않았음에도 DeadLock 발생한 이유는 **FK를 가지고 있는 테이블에 대한 INSERT, UPDATE 또는 DELETE 작업 시 MySQL InnoDB 엔진이 자동으로 FK로 참조 중인 레코드에 레코드 레벨의 S-Lock 설정**
+- UPDATE query에 사용되는 모든 레코드에 X-Lock(Exclusive lock) 설정
 <br>
 
 - Reservation 객체는 Account(사용자 계정)과 MeetingRoom 객체를 FK로 참조하는 구조
 - Reservation을 INSERT 하는 과정에서 제약 조건을 확인하기 위해 FK로 참조 중인 Meeting Room 레코드에 S-Lock(Shard Lock) 설정되고, 그 후에 Meeting Room의 numberOfReservation(현재 예약 개수)를 갱신하기 위해 X-Lock(Exclusive Lock)을 획득하기 위해 대기
-- 하지만 모든 트랜잭션이 같은 상황이므로 X-Lock(Exclusive Lock)을 획득할 수 없는 Deadlock 상태가 됨
+- 하지만 모든 트랜잭션이 같은 상황이므로 X-Lock(Exclusive Lock)을 획득할 수 없는 Deadlock 발생
 <br>
 
 데드락을 해결할 수 있는 방법은 다음과 같다.
 - SaveAndFlush 사용(갱신 손실 발생)
 - Lock 사용 (Attempt 3)
+
+추가적으로 Semaphore를 공부하며 생산자-소비자 모델을 구현해 ```pthread_cond_wait()``` 로 공유 자원에 접근하는 순서를 조절한 경험이 있는데 더 자세한 내용은 https://velog.io/@evelyn82ny/synchronization-semaphore 에서 확인 가능하다.
 
 <br>
 
@@ -103,7 +104,7 @@ protected ReservationResponse reserveMeetingRoom(MeetingRoom meetingRoom, Accoun
 Attempt2에서 Deadlock이 발생한 이유는 S-lock 획득 후 X-Lock을 획득하는 과정이 트랜잭션으로 묶여있었기 때문이다. 그러므로 ```SaveAndFlush()``` 를 사용해 먼저 미팅룸의 현재 예약 개수를 변경한 후 예약을 생성하면 데드락을 막을 수 있다. 하지만 갱신 손실 문제가 발생한다.
 <br>
 
-HikariCP에서 Connection 개수를 10개로 설정했다. (10개가 Default) 커넥션을 얻은 첫 10개의 스레드는 같은 버전의 레코들르 본다. 만약 예약이 가능한 상태라면 예약을 생성하고 미팅룸의 현재 예약 개수를 증가시킬 것이다. 즉, 예약 가능한 개수가 1개임에도 10개의 스레드가 10개의 예약을 생성하고, 10개의 스레드가 미팅룸의 현재 예약 개수를 1 증가시키는 쿼리를 10개 발생시켜도 같은 버전의 상태를 같은 조건으로 갱신하는 갱신 손실이 발생한다.<br>
+HikariCP에서 Connection 개수를 10개로 설정했다. (10개가 Default) 커넥션을 얻은 첫 10개의 스레드는 같은 버전의 레코드를 바탕으로 작업한다. 만약 예약이 가능한 상태라면 예약을 생성하고 미팅룸의 현재 예약 개수를 증가시킬 것이다. 즉, 예약 가능한 개수가 1개임에도 10개의 스레드가 10개의 예약을 생성하고, 10개의 스레드가 미팅룸의 현재 예약 개수를 1 증가시키는 쿼리를 10개 발생시켜도 같은 버전의 상태를 같은 조건으로 갱신하는 갱신 손실이 발생한다.<br>
 
 갱신 손실을 막기 위해선 낙관적 락을 사용해 충돌을 감지하거나, 비관적 락을 사용해 아예 직렬화하거나 아니면 더 좋은 방법이 필요하다. 아래 Attempt3는 비관적 락을 사용한 결과이다.
 
@@ -121,6 +122,6 @@ public Optional<MeetingRoom> findByIdWithLock(Long meetingRoomId) {
 ```
 
 - MeetingRoom을 가져오는 메소드에 **PESSIMISTIC_WRITE** 설정하면 **FOR UDPATE**로 접근
-- 레코드에 X-Lock(Exclusive Lock)을 획득하면 다른 세션에서 S-Lock(Shared lock) 이나 X-Lock(Exclusive Lock) 을 획득할 수 없어 차례대로 처리됨 (X-lock을 획득한 세션이 끝나야 다른 세션에서 접근 가능)
-- Reservation 생성 전 MeetingRoom 레코드에 대한 X-Lock(Exclusive Lock)을 획득하므로 다른 세션은 해당 세션이 끝날 때까지 대기하므로 제한된 인원만큼만 예약이 생성됨
-- 하지만 모든 트랜잭션이 직렬화되므로 응답 속도가 느려지는데 이를 해결하는 단계에 있음
+- 레코드에 X-Lock(Exclusive Lock)을 획득하면 다른 세션에서 S-Lock(Shared lock)이나 X-Lock(Exclusive Lock)을 획득할 수 없어 차례대로 처리됨 (X-lock을 획득한 세션이 끝나야 다른 세션에서 접근 가능)
+- Reservation 생성 전 MeetingRoom 레코드에 대한 X-Lock(Exclusive Lock)을 획득하므로 다른 세션은 해당 세션이 끝날 때까지 대기하며 제한된 인원만큼만 예약을 생성할 수 있음
+- 하지만 모든 트랜잭션이 직렬화되므로 응답 속도가 느려지는데 현재 이를 해결하는 단계에 있음
